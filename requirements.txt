@@ -1,0 +1,23 @@
+# Nano Banana Project Dependencies
+# Install with: pip install -r requirements.txt
+
+# Google Generative AI SDK
+google-genai>=1.30.0
+
+# Image processing
+Pillow>=10.0.0
+
+# Web framework
+streamlit>=1.28.0
+
+# API server for n8n integration
+Flask>=3.0.0
+
+# Cloud storage
+cloudinary>=1.36.0
+
+# Environment variable management
+python-dotenv>=1.0.0
+
+# HTTP requests
+requests>=2.31.0

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cloudinary Upload Widget Test</title>
+    <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
+</head>
+<body>
+    <h1>Cloudinary Upload Widget Test</h1>
+    <button id="upload_widget" style="background-color: #0078FF; color: white; padding: 15px 30px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer;">
+        Upload Files
+    </button>
+    <div id="status" style="margin-top: 20px; padding: 15px; background-color: #f0f2f6;"></div>
+
+    <script type="text/javascript">
+        var cloudName = 'dbutevqjq';
+        var uploadPreset = 'ml_default';
+
+        console.log('Cloud Name:', cloudName);
+        console.log('Upload Preset:', uploadPreset);
+
+        var myWidget = cloudinary.createUploadWidget({
+            cloudName: cloudName,
+            uploadPreset: uploadPreset,
+            folder: 'adalo/input',
+            sources: ['local'],
+            multiple: true
+        }, (error, result) => {
+            var statusDiv = document.getElementById('status');
+
+            if (error) {
+                console.error('ERROR:', error);
+                statusDiv.innerHTML = '<h3 style="color: red;">Error:</h3><pre>' + JSON.stringify(error, null, 2) + '</pre>';
+                return;
+            }
+
+            console.log('Result:', result);
+
+            if (result.event === "success") {
+                statusDiv.innerHTML = '<h3 style="color: green;">Success!</h3><p>Uploaded: ' + result.info.secure_url + '</p>';
+            }
+        });
+
+        document.getElementById("upload_widget").addEventListener("click", function() {
+            console.log('Opening widget...');
+            myWidget.open();
+        }, false);
+    </script>
+</body>
+</html>

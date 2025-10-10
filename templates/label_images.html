@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Label Images - Client Onboarding</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #06070B;
+            color: #E6E6E6;
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #06070B;
+            border-radius: 0;
+            padding: 30px;
+        }
+
+        header {
+            text-align: center;
+            padding-bottom: 30px;
+            border-bottom: 1px solid rgba(231, 254, 58, 0.1);
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            color: #E6E6E6;
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .client-name {
+            font-size: 1.2rem;
+            color: #B0B0B0;
+            font-weight: 500;
+        }
+
+        .folder-selector {
+            background: #272F35;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(231, 254, 58, 0.15);
+        }
+
+        .folder-selector label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #E6E6E6;
+        }
+
+        .folder-selector select {
+            width: 100%;
+            padding: 14px;
+            font-size: 1rem;
+            border: 2px solid rgba(231, 254, 58, 0.2);
+            border-radius: 8px;
+            background: #06070B;
+            color: #E6E6E6;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .folder-selector select:focus {
+            outline: none;
+            border-color: #E7FE3A;
+        }
+
+        .folder-selector select option {
+            background: #06070B;
+            color: #E6E6E6;
+        }
+
+        .status-bar {
+            background: #272F35;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            border: 1px solid rgba(231, 254, 58, 0.15);
+        }
+
+        .status-counter {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .status-counter.incomplete {
+            color: #dc3545;
+        }
+
+        .status-counter.complete {
+            color: #E7FE3A;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px;
+            font-size: 1.2rem;
+            color: #B0B0B0;
+        }
+
+        .spinner {
+            border: 4px solid #272F35;
+            border-top: 4px solid #E7FE3A;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #272F35;
+            color: #dc3545;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border: 1px solid #dc3545;
+        }
+
+        .empty-message {
+            text-align: center;
+            padding: 60px;
+            color: #B0B0B0;
+        }
+
+        .empty-message h2 {
+            color: #E6E6E6;
+            margin-bottom: 15px;
+        }
+
+        .image-list {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .image-container {
+            background: #272F35;
+            border: 2px solid rgba(231, 254, 58, 0.15);
+            border-radius: 12px;
+            padding: 25px;
+            transition: all 0.3s;
+        }
+
+        .image-container.labeled {
+            border-color: #E7FE3A;
+        }
+
+        .image-container.unlabeled {
+            border-color: #dc3545;
+        }
+
+        .image-container:hover {
+            box-shadow: 0 10px 30px rgba(231, 254, 58, 0.1);
+        }
+
+        .image-row {
+            display: flex;
+            gap: 25px;
+            align-items: flex-start;
+        }
+
+        .image-thumbnail {
+            flex-shrink: 0;
+        }
+
+        .thumbnail {
+            width: 250px;
+            height: 250px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid rgba(231, 254, 58, 0.2);
+        }
+
+        .image-details {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .url-display {
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: #B0B0B0;
+            word-break: break-all;
+            background: #06070B;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid rgba(231, 254, 58, 0.15);
+        }
+
+        .label-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .label-input-group label {
+            font-weight: 600;
+            color: #E6E6E6;
+        }
+
+        .label-input {
+            width: 100%;
+            padding: 14px;
+            font-size: 1rem;
+            border: 2px solid rgba(231, 254, 58, 0.2);
+            border-radius: 8px;
+            transition: all 0.3s;
+            background: #06070B;
+            color: #E6E6E6;
+        }
+
+        .label-input::placeholder {
+            color: #666;
+        }
+
+        .label-input:focus {
+            outline: none;
+            border-color: #E7FE3A;
+            background: #272F35;
+        }
+
+        .label-input.error {
+            border-color: #dc3545;
+        }
+
+        .label-input.valid {
+            border-color: #E7FE3A;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 40px;
+            padding-top: 40px;
+            border-top: 1px solid rgba(231, 254, 58, 0.1);
+        }
+
+        button {
+            padding: 14px 35px;
+            font-size: 1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background-color: #E7FE3A;
+            color: #06070B;
+        }
+
+        .btn-primary::after {
+            content: " →";
+        }
+
+        .btn-primary:hover {
+            background-color: #d4eb25;
+            transform: translateY(-2px);
+        }
+
+        .btn-primary:disabled {
+            background-color: #272F35;
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background-color: #272F35;
+            color: #E6E6E6;
+            border: 1px solid rgba(231, 254, 58, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background-color: #06070B;
+            border-color: #E7FE3A;
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .image-row {
+                flex-direction: column;
+            }
+
+            .thumbnail {
+                width: 100%;
+                max-width: 250px;
+                height: auto;
+                margin: 0 auto;
+            }
+
+            .status-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+
+        /* Touch-friendly on mobile */
+        @media (max-width: 768px) {
+            button, .label-input {
+                min-height: 44px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📝 Label Images</h1>
+            <div class="client-name" id="clientNameDisplay">Select a client folder</div>
+        </header>
+
+        <div class="folder-selector">
+            <label for="folderSelect">Select Client Folder:</label>
+            <select id="folderSelect" onchange="onFolderChange()">
+                <option value="">-- Select a folder --</option>
+            </select>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-counter" id="statusCounter">Labeled: 0 of 0 images</div>
+            <div id="validationMessage"></div>
+        </div>
+
+        <div id="loadingSpinner" class="loading">
+            <div class="spinner"></div>
+            <p>Loading images...</p>
+        </div>
+
+        <div id="errorContainer"></div>
+
+        <div id="imageList" class="image-list"></div>
+
+        <div class="action-buttons" id="actionButtons" style="display: none;">
+            <button class="btn-secondary" onclick="window.history.back()">← Back</button>
+            <button class="btn-primary" id="downloadBtn" onclick="downloadLabels()" disabled>
+                Download Labels File
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let clientName = '';
+        let images = [];
+        let labels = new Map();
+        let allFolders = [];
+
+        // Get API server URL from environment or use current domain
+        const API_SERVER_URL = window.location.origin;
+
+        // Extract client name from URL
+        function getClientFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('client');
+        }
+
+        // Load all folders from Cloudinary
+        async function loadFolders() {
+            try {
+                const response = await fetch(`${API_SERVER_URL}/api/get-all-folders`);
+                const data = await response.json();
+
+                if (data.success) {
+                    allFolders = data.folders;
+                    populateFolderDropdown();
+
+                    // If client is in URL, select it automatically
+                    const urlClient = getClientFromURL();
+                    if (urlClient && allFolders.includes(urlClient)) {
+                        document.getElementById('folderSelect').value = urlClient;
+                        onFolderChange();
+                    }
+                } else {
+                    console.error('Failed to load folders:', data.error);
+                }
+            } catch (error) {
+                console.error('Error loading folders:', error);
+            }
+        }
+
+        // Populate folder dropdown
+        function populateFolderDropdown() {
+            const select = document.getElementById('folderSelect');
+
+            // Keep the default option
+            select.innerHTML = '<option value="">-- Select a folder --</option>';
+
+            // Add folders
+            allFolders.forEach(folder => {
+                const option = document.createElement('option');
+                option.value = folder;
+                option.textContent = folder;
+                select.appendChild(option);
+            });
+        }
+
+        // Handle folder selection change
+        function onFolderChange() {
+            const selectedFolder = document.getElementById('folderSelect').value;
+
+            if (!selectedFolder) {
+                // Reset if no folder selected
+                clientName = '';
+                images = [];
+                labels = new Map();
+                document.getElementById('imageList').innerHTML = '';
+                document.getElementById('actionButtons').style.display = 'none';
+                document.getElementById('clientNameDisplay').textContent = 'Select a client folder';
+                document.getElementById('statusCounter').textContent = 'Labeled: 0 of 0 images';
+                document.getElementById('validationMessage').innerHTML = '';
+                return;
+            }
+
+            // Load images for selected folder
+            clientName = selectedFolder;
+            labels = new Map(); // Reset labels
+            loadImages(selectedFolder);
+        }
+
+        // Load images on page load
+        async function loadImages(client) {
+            // Show loading spinner
+            document.getElementById('loadingSpinner').style.display = 'block';
+            document.getElementById('imageList').innerHTML = '';
+            document.getElementById('actionButtons').style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_SERVER_URL}/api/get-client-images?client=${encodeURIComponent(client)}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    images = data.images;
+                    clientName = data.client;
+                    renderImages();
+                } else {
+                    showError(data.error || 'Failed to load images');
+                }
+            } catch (error) {
+                showError(`Error loading images: ${error.message}`);
+            } finally {
+                document.getElementById('loadingSpinner').style.display = 'none';
+            }
+        }
+
+        // Render images to the page
+        function renderImages() {
+            const imageList = document.getElementById('imageList');
+            const actionButtons = document.getElementById('actionButtons');
+            const clientNameDisplay = document.getElementById('clientNameDisplay');
+
+            // Update client name display
+            clientNameDisplay.textContent = `Client: ${clientName}`;
+
+            if (images.length === 0) {
+                imageList.innerHTML = `
+                    <div class="empty-message">
+                        <h2>No Images Found</h2>
+                        <p>No images found in <code>${clientName}/input/</code> folder.</p>
+                        <p>Please go back and upload images first.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Clear existing content
+            imageList.innerHTML = '';
+
+            // Create image containers
+            images.forEach((url, index) => {
+                const container = document.createElement('div');
+                container.className = 'image-container unlabeled';
+                container.id = `image-${index}`;
+
+                container.innerHTML = `
+                    <div class="image-row">
+                        <div class="image-thumbnail">
+                            <img src="${url.replace('/upload/', '/upload/w_250,h_250,c_fill/')}"
+                                 class="thumbnail"
+                                 alt="Image ${index + 1}"
+                                 loading="lazy">
+                        </div>
+                        <div class="image-details">
+                            <div class="url-display">${url}</div>
+                            <div class="label-input-group">
+                                <label for="label-${index}">Product Name:</label>
+                                <input type="text"
+                                       id="label-${index}"
+                                       class="label-input"
+                                       placeholder="Enter product name"
+                                       data-index="${index}"
+                                       data-url="${url}">
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                imageList.appendChild(container);
+
+                // Add event listener
+                const input = container.querySelector('.label-input');
+                input.addEventListener('input', handleLabelInput);
+                input.addEventListener('blur', validateSingleLabel);
+            });
+
+            // Show action buttons
+            actionButtons.style.display = 'flex';
+
+            // Update counter
+            updateCounter();
+        }
+
+        // Handle label input
+        function handleLabelInput(event) {
+            const input = event.target;
+            const index = parseInt(input.dataset.index);
+            const url = input.dataset.url;
+            const value = input.value.trim();
+
+            // Store label
+            if (value) {
+                labels.set(url, sanitizeLabel(value));
+                input.classList.remove('error');
+                input.classList.add('valid');
+                document.getElementById(`image-${index}`).classList.remove('unlabeled');
+                document.getElementById(`image-${index}`).classList.add('labeled');
+            } else {
+                labels.delete(url);
+                input.classList.remove('valid');
+                document.getElementById(`image-${index}`).classList.remove('labeled');
+                document.getElementById(`image-${index}`).classList.add('unlabeled');
+            }
+
+            // Update counter and validate
+            updateCounter();
+            validateLabels();
+        }
+
+        // Validate single label on blur
+        function validateSingleLabel(event) {
+            const input = event.target;
+            const value = input.value.trim();
+
+            if (!value) {
+                input.classList.add('error');
+            } else {
+                input.classList.remove('error');
+            }
+        }
+
+        // Sanitize label
+        function sanitizeLabel(label) {
+            // Remove pipes and newlines
+            label = label.replace(/[|\n\r]/g, '');
+            // Convert multiple spaces to single space
+            label = label.replace(/\s+/g, ' ');
+            // Convert to lowercase (optional)
+            label = label.toLowerCase();
+            return label.trim();
+        }
+
+        // Update counter
+        function updateCounter() {
+            const counter = document.getElementById('statusCounter');
+            const labeledCount = labels.size;
+            const totalCount = images.length;
+
+            counter.textContent = `Labeled: ${labeledCount} of ${totalCount} images`;
+
+            if (labeledCount === totalCount && totalCount > 0) {
+                counter.classList.remove('incomplete');
+                counter.classList.add('complete');
+            } else {
+                counter.classList.remove('complete');
+                counter.classList.add('incomplete');
+            }
+        }
+
+        // Validate all labels
+        function validateLabels() {
+            const downloadBtn = document.getElementById('downloadBtn');
+            const validationMessage = document.getElementById('validationMessage');
+            const allLabeled = labels.size === images.length && images.length > 0;
+
+            if (allLabeled) {
+                downloadBtn.disabled = false;
+                validationMessage.innerHTML = '<span style="color: #E7FE3A; font-weight: bold;">✓ All images labeled!</span>';
+            } else {
+                downloadBtn.disabled = true;
+                const remaining = images.length - labels.size;
+                validationMessage.innerHTML = `<span style="color: #dc3545; font-weight: bold;">${remaining} image(s) remaining</span>`;
+            }
+
+            return allLabeled;
+        }
+
+        // Collect all labels
+        function collectLabels() {
+            const labelArray = [];
+            images.forEach(url => {
+                const label = labels.get(url);
+                if (label) {
+                    labelArray.push({ label, url });
+                }
+            });
+            return labelArray;
+        }
+
+        // Download labels as text file
+        function downloadLabels() {
+            if (!validateLabels()) {
+                alert('Please label all images before downloading.');
+
+                // Highlight empty fields
+                document.querySelectorAll('.label-input').forEach(input => {
+                    if (!input.value.trim()) {
+                        input.classList.add('error');
+                        input.focus();
+                    }
+                });
+                return;
+            }
+
+            const labelData = collectLabels();
+            const content = labelData.map(item => `${item.label} | ${item.url}`).join('\n');
+
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${clientName}_image_labels.txt`;
+            link.click();
+
+            URL.revokeObjectURL(url);
+
+            // Show success message
+            const validationMessage = document.getElementById('validationMessage');
+            validationMessage.innerHTML = '<span style="color: #E7FE3A; font-weight: bold;">✓ Labels downloaded successfully!</span>';
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorContainer = document.getElementById('errorContainer');
+            errorContainer.innerHTML = `
+                <div class="error-message">
+                    <strong>Error:</strong> ${message}
+                    <br><br>
+                    <button class="btn-secondary" onclick="location.reload()">Retry</button>
+                    <button class="btn-secondary" onclick="window.history.back()">Go Back</button>
+                </div>
+            `;
+        }
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            // Hide loading spinner initially
+            document.getElementById('loadingSpinner').style.display = 'none';
+
+            // Load folders from Cloudinary
+            loadFolders();
+        });
+    </script>
+</body>
+</html>

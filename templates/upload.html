@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Images - Client Onboarding</title>
+    <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #ffffff;
+            color: #000000;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            padding: 2rem 0;
+            border-bottom: 2px solid #e0e0e0;
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            color: #000000;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #666666;
+            font-size: 1rem;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 3rem;
+        }
+
+        .step {
+            padding: 0.75rem 1.5rem;
+            background-color: #f8f9fa;
+            border: 2px solid #ddd;
+            border-radius: 0.5rem;
+            font-weight: bold;
+            color: #666666;
+        }
+
+        .step.active {
+            background-color: #0078FF;
+            border-color: #0078FF;
+            color: #ffffff;
+        }
+
+        .step.completed {
+            background-color: #28a745;
+            border-color: #28a745;
+            color: #ffffff;
+        }
+
+        .client-info {
+            background-color: #d1ecf1;
+            border: 2px solid #17a2b8;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .client-info h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            color: #0c5460;
+        }
+
+        .client-info p {
+            color: #0c5460;
+            margin: 0.5rem 0;
+        }
+
+        .upload-section {
+            text-align: center;
+            padding: 3rem 2rem;
+            background-color: #f8f9fa;
+            border-radius: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .upload-section h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #000000;
+        }
+
+        .upload-section p {
+            color: #666666;
+            margin-bottom: 2rem;
+        }
+
+        #upload-button {
+            background-color: #0078FF;
+            color: white;
+            padding: 1rem 3rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1.125rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        #upload-button:hover {
+            background-color: #0056D2;
+        }
+
+        #upload-status {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background-color: #ffffff;
+            border-radius: 0.5rem;
+            min-height: 100px;
+        }
+
+        .success-message {
+            background-color: #d4edda;
+            border: 2px solid #28a745;
+            color: #155724;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            margin-top: 2rem;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        .success-message h3 {
+            margin-bottom: 1rem;
+            color: #155724;
+        }
+
+        .uploaded-images {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .uploaded-image {
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .uploaded-image img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 0.25rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .uploaded-image .info {
+            font-size: 0.875rem;
+            color: #666666;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary {
+            background-color: #0078FF;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056D2;
+        }
+
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #218838;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 2px solid #e0e0e0;
+            color: #666666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>📋 Client Onboarding System</h1>
+            <p>Upload images to Cloudinary</p>
+        </div>
+
+        <!-- Step Indicator -->
+        <div class="step-indicator">
+            <div class="step completed">1. Client Info</div>
+            <div class="step completed">2. Folder Setup</div>
+            <div class="step active">3. Upload Images</div>
+            <div class="step">4. Complete</div>
+        </div>
+
+        <!-- Client Info -->
+        <div class="client-info">
+            <h2>📁 Upload Information</h2>
+            <p><strong>Client Name:</strong> <span id="client-name">Loading...</span></p>
+            <p><strong>Upload Destination:</strong> <code id="upload-path">Loading...</code></p>
+            <p><strong>Supported:</strong> Multiple images (up to 100 per batch) • Max 10MB per image • JPG, PNG, GIF, WebP</p>
+        </div>
+
+        <!-- Upload Section -->
+        <div class="upload-section">
+            <h2>📤 Upload Your Images</h2>
+            <p>Click the button below to select and upload your images directly to Cloudinary.</p>
+            <button id="upload-button">📤 Click to Upload Images</button>
+            <div id="upload-status"></div>
+        </div>
+
+        <!-- Success Message -->
+        <div class="success-message" id="success-message">
+            <h3>✅ Upload Complete!</h3>
+            <p><strong>Total Images Uploaded:</strong> <span id="total-uploaded">0</span></p>
+            <p>Your images have been successfully uploaded to Cloudinary.</p>
+        </div>
+
+        <!-- Uploaded Images Grid -->
+        <div class="uploaded-images" id="uploaded-images"></div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button class="btn btn-primary" onclick="uploadMore()">📤 Upload More Images</button>
+            <button class="btn btn-success" onclick="completeOnboarding()" id="complete-btn" style="display: none;">✅ Complete Onboarding</button>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <small>Client Onboarding System • Powered by Cloudinary • Built with ❤️</small>
+        </div>
+    </div>
+
+    <script>
+        // Get URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const clientName = urlParams.get('client') || 'unknown';
+        const cloudName = urlParams.get('cloud') || '';
+        const uploadPreset = urlParams.get('preset') || '';
+        const folder = urlParams.get('folder') || '';
+
+        // Update UI with client info
+        document.getElementById('client-name').textContent = clientName;
+        document.getElementById('upload-path').textContent = folder;
+
+        let uploadedImages = [];
+        let myWidget;
+
+        console.log('Initializing Cloudinary Widget with SIGNED upload...');
+        console.log('Cloud:', cloudName, 'Folder:', folder);
+
+        // Function to generate upload signature from backend
+        function generateSignature(callback, params_to_sign) {
+            console.log('Widget requesting signature for params:', params_to_sign);
+
+            fetch('http://localhost:5001/api/generate-signature', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    folder: folder,
+                    params_to_sign: params_to_sign
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Signature received from backend:', data);
+                callback(data);
+            })
+            .catch(error => {
+                console.error('Signature generation failed:', error);
+            });
+        }
+
+        // Create Cloudinary upload widget with SIGNED uploads
+        try {
+            myWidget = cloudinary.createUploadWidget({
+                cloudName: cloudName,
+                uploadSignature: generateSignature,
+                sources: ['local', 'camera', 'url', 'google_drive', 'dropbox'],
+                multiple: true,
+                maxFiles: 100,
+                maxFileSize: 10000000,
+                clientAllowedFormats: ['image'],
+                showPoweredBy: false,
+                showSkipCropButton: true,
+                styles: {
+                    palette: {
+                        window: "#FFFFFF",
+                        windowBorder: "#90A0B3",
+                        tabIcon: "#0078FF",
+                        menuIcons: "#5A616A",
+                        textDark: "#000000",
+                        textLight: "#FFFFFF",
+                        link: "#0078FF",
+                        action: "#FF620C",
+                        inactiveTabIcon: "#0E2F5A",
+                        error: "#F44235",
+                        inProgress: "#0078FF",
+                        complete: "#20B832",
+                        sourceBg: "#E4EBF1"
+                    }
+                }
+            }, (error, result) => {
+                if (error) {
+                    console.error('Upload error:', error);
+                    document.getElementById('upload-status').innerHTML =
+                        '<p style="color: red;">❌ Error: ' + error.message + '</p>';
+                    return;
+                }
+
+                console.log('Widget event:', result);
+
+                if (result.event === "success") {
+                    console.log('Upload success:', result.info);
+                    uploadedImages.push({
+                        url: result.info.secure_url,
+                        public_id: result.info.public_id,
+                        format: result.info.format,
+                        width: result.info.width,
+                        height: result.info.height,
+                        thumbnail: result.info.thumbnail_url
+                    });
+                    updateUploadStatus();
+                }
+
+                if (result.event === "close") {
+                    console.log('Widget closed');
+                    if (uploadedImages.length > 0) {
+                        showSuccessMessage();
+                    }
+                }
+            });
+
+            console.log('Widget created successfully');
+
+            // Attach button click event
+            document.getElementById('upload-button').addEventListener('click', function() {
+                console.log('Opening widget...');
+                myWidget.open();
+            });
+
+        } catch (e) {
+            console.error('Failed to create widget:', e);
+            document.getElementById('upload-status').innerHTML =
+                '<p style="color: red;">❌ Failed to initialize: ' + e.message + '</p>';
+        }
+
+        function updateUploadStatus() {
+            const statusDiv = document.getElementById('upload-status');
+            const imagesGrid = document.getElementById('uploaded-images');
+
+            statusDiv.innerHTML = `
+                <h3 style="color: #28a745;">✅ Uploaded: ${uploadedImages.length} images</h3>
+            `;
+
+            imagesGrid.innerHTML = uploadedImages.map(img => `
+                <div class="uploaded-image">
+                    <img src="${img.url}" alt="Uploaded image" />
+                    <div class="info">
+                        ${img.width}x${img.height} • ${img.format.toUpperCase()}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function showSuccessMessage() {
+            document.getElementById('success-message').classList.add('show');
+            document.getElementById('total-uploaded').textContent = uploadedImages.length;
+            document.getElementById('complete-btn').style.display = 'inline-block';
+        }
+
+        function uploadMore() {
+            myWidget.open();
+        }
+
+        function completeOnboarding() {
+            // Store upload count in localStorage so Streamlit can read it
+            localStorage.setItem('uploadedImageCount', uploadedImages.length);
+            localStorage.setItem('clientName', clientName);
+
+            // Close this window and return to Streamlit
+            alert(`✅ Success! ${uploadedImages.length} images uploaded.\n\nYou can now close this tab and return to the main application.`);
+            window.close();
+        }
+    </script>
+</body>
+</html>

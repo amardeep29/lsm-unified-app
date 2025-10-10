@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Images - Client Onboarding</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #06070B;
+            color: #E6E6E6;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            padding: 2rem 0;
+            border-bottom: 1px solid rgba(231, 254, 58, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.75rem;
+            color: #E6E6E6;
+            font-weight: bold;
+        }
+
+        h2 {
+            color: #E6E6E6;
+            margin-bottom: 0.5rem;
+        }
+
+        .client-info {
+            background-color: #272F35;
+            border: 1px solid rgba(231, 254, 58, 0.2);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .client-info p {
+            color: #E6E6E6;
+            margin: 0.5rem 0;
+        }
+
+        .client-info code {
+            background: #06070B;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            color: #E7FE3A;
+            font-family: 'Courier New', monospace;
+        }
+
+        .upload-area {
+            border: 3px dashed rgba(231, 254, 58, 0.3);
+            border-radius: 0.75rem;
+            padding: 3rem 2rem;
+            text-align: center;
+            background-color: #272F35;
+            margin-bottom: 2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .upload-area:hover {
+            background-color: #06070B;
+            border-color: #E7FE3A;
+        }
+
+        .upload-area.dragover {
+            background-color: #06070B;
+            border-color: #E7FE3A;
+            box-shadow: 0 10px 30px rgba(231, 254, 58, 0.2);
+        }
+
+        .upload-area h2, .upload-area p {
+            color: #E6E6E6;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        .upload-button {
+            background-color: #E7FE3A;
+            color: #06070B;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1.125rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: all 0.3s;
+        }
+
+        .upload-button::after {
+            content: " →";
+        }
+
+        .upload-button:hover {
+            background-color: #d4eb25;
+            transform: translateY(-2px);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 35px;
+            background-color: #272F35;
+            border-radius: 17.5px;
+            overflow: hidden;
+            margin: 1rem 0;
+            display: none;
+            border: 1px solid rgba(231, 254, 58, 0.2);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #E7FE3A;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #06070B;
+            font-weight: bold;
+        }
+
+        .uploaded-list {
+            margin-top: 2rem;
+        }
+
+        .uploaded-item {
+            background-color: #272F35;
+            border: 1px solid #E7FE3A;
+            padding: 1rem;
+            margin: 0.75rem 0;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: #E6E6E6;
+        }
+
+        .error-item {
+            background-color: #272F35;
+            border-color: #dc3545;
+            color: #dc3545;
+        }
+
+        .complete-button {
+            background-color: #E7FE3A;
+            color: #06070B;
+            padding: 1rem 3rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1.125rem;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 2rem;
+            display: none;
+            transition: all 0.3s;
+        }
+
+        .complete-button::after {
+            content: " →";
+        }
+
+        .complete-button:hover {
+            background-color: #d4eb25;
+            transform: translateY(-2px);
+        }
+
+        .folder-selector {
+            background: #272F35;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(231, 254, 58, 0.15);
+        }
+
+        .folder-selector label {
+            display: block;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+            color: #E6E6E6;
+        }
+
+        .folder-selector select {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1rem;
+            border: 2px solid rgba(231, 254, 58, 0.2);
+            border-radius: 0.5rem;
+            background: #06070B;
+            color: #E6E6E6;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .folder-selector select:focus {
+            outline: none;
+            border-color: #E7FE3A;
+        }
+
+        .folder-selector select option {
+            background: #06070B;
+            color: #E6E6E6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📤 Upload Images</h1>
+            <p>Drag and drop or click to upload</p>
+        </div>
+
+        <div class="folder-selector">
+            <label for="folderSelect">Select Client Folder:</label>
+            <select id="folderSelect" onchange="onFolderChange()">
+                <option value="">-- Select a folder --</option>
+            </select>
+        </div>
+
+        <div class="client-info">
+            <h2>📁 Upload Information</h2>
+            <p><strong>Client:</strong> <span id="client-name">Loading...</span></p>
+            <p><strong>Destination:</strong> <code id="upload-path">Loading...</code></p>
+        </div>
+
+        <div class="upload-area" id="upload-area">
+            <h2>📎 Drag files here or click to select</h2>
+            <p>Supported: JPG, PNG, GIF, WebP • Max 10MB per file</p>
+            <input type="file" id="file-input" multiple accept="image/*">
+            <button class="upload-button" onclick="document.getElementById('file-input').click()">
+                Select Images
+            </button>
+        </div>
+
+        <div class="progress-bar" id="progress-bar">
+            <div class="progress-fill" id="progress-fill">0%</div>
+        </div>
+
+        <div class="uploaded-list" id="uploaded-list"></div>
+
+        <button class="complete-button" id="complete-btn" onclick="completeOnboarding()">
+            ✅ Complete Onboarding
+        </button>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        let clientName = urlParams.get('client') || '';
+        let cloudName = urlParams.get('cloud') || '';
+        let folder = urlParams.get('folder') || '';
+        let allFolders = [];
+
+        // Get API server URL (same origin as this page)
+        const apiServerUrl = window.location.origin;
+
+        // Load all folders from Cloudinary
+        async function loadFolders() {
+            try {
+                const response = await fetch(`${apiServerUrl}/api/get-all-folders`);
+                const data = await response.json();
+
+                if (data.success) {
+                    allFolders = data.folders;
+                    populateFolderDropdown();
+
+                    // If client is in URL, select it automatically
+                    if (clientName && allFolders.includes(clientName)) {
+                        document.getElementById('folderSelect').value = clientName;
+                        onFolderChange();
+                    }
+                } else {
+                    console.error('Failed to load folders:', data.error);
+                }
+            } catch (error) {
+                console.error('Error loading folders:', error);
+            }
+        }
+
+        // Populate folder dropdown
+        function populateFolderDropdown() {
+            const select = document.getElementById('folderSelect');
+
+            // Keep the default option
+            select.innerHTML = '<option value="">-- Select a folder --</option>';
+
+            // Add folders
+            allFolders.forEach(folderName => {
+                const option = document.createElement('option');
+                option.value = folderName;
+                option.textContent = folderName;
+                select.appendChild(option);
+            });
+        }
+
+        // Handle folder selection change
+        async function onFolderChange() {
+            const selectedFolder = document.getElementById('folderSelect').value;
+
+            if (!selectedFolder) {
+                // Reset if no folder selected
+                document.getElementById('client-name').textContent = 'No folder selected';
+                document.getElementById('upload-path').textContent = 'N/A';
+                return;
+            }
+
+            clientName = selectedFolder;
+            folder = `${clientName}/input`;
+
+            // Get upload config for selected client
+            try {
+                const response = await fetch(`${apiServerUrl}/api/get-upload-config`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({client_name: clientName})
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    cloudName = data.cloud_name;
+                    folder = data.folder;
+
+                    document.getElementById('client-name').textContent = clientName;
+                    document.getElementById('upload-path').textContent = folder;
+                } else {
+                    console.error('Failed to get upload config:', data.error);
+                }
+            } catch (error) {
+                console.error('Error getting upload config:', error);
+            }
+        }
+
+        // Initialize on page load
+        if (clientName && folder) {
+            document.getElementById('client-name').textContent = clientName;
+            document.getElementById('upload-path').textContent = folder;
+        }
+
+        // Load folders on page load
+        loadFolders();
+
+        const uploadArea = document.getElementById('upload-area');
+        const fileInput = document.getElementById('file-input');
+        const uploadedList = document.getElementById('uploaded-list');
+        const progressBar = document.getElementById('progress-bar');
+        const progressFill = document.getElementById('progress-fill');
+        const completeBtn = document.getElementById('complete-btn');
+
+        let uploadedCount = 0;
+        let totalFiles = 0;
+
+        // Drag and drop handlers
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            handleFiles(files);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        async function handleFiles(files) {
+            if (files.length === 0) return;
+
+            totalFiles = files.length;
+            uploadedCount = 0;
+            progressBar.style.display = 'block';
+
+            // Get signature from backend
+            const signatureData = await getUploadSignature();
+
+            for (const file of files) {
+                await uploadFile(file, signatureData);
+            }
+
+            completeBtn.style.display = 'block';
+        }
+
+        async function getUploadSignature() {
+            const response = await fetch(`${apiServerUrl}/api/generate-signature`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({folder: folder})
+            });
+            return await response.json();
+        }
+
+        async function uploadFile(file, signatureData) {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('api_key', signatureData.api_key);
+            formData.append('timestamp', signatureData.timestamp);
+            formData.append('signature', signatureData.signature);
+            formData.append('folder', folder);
+
+            try {
+                const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    addUploadedItem(file.name, true);
+                } else {
+                    console.error('Upload failed:', result);
+                    addUploadedItem(file.name, false, result.error?.message || 'Upload failed');
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                addUploadedItem(file.name, false, error.message);
+            }
+
+            uploadedCount++;
+            updateProgress();
+        }
+
+        function addUploadedItem(filename, success, error = '') {
+            const item = document.createElement('div');
+            item.className = 'uploaded-item' + (success ? '' : ' error-item');
+            item.innerHTML = `
+                ${success ? '✅' : '❌'} ${filename}
+                ${error ? `<br><small>${error}</small>` : ''}
+            `;
+            uploadedList.appendChild(item);
+        }
+
+        function updateProgress() {
+            const percent = Math.round((uploadedCount / totalFiles) * 100);
+            progressFill.style.width = percent + '%';
+            progressFill.textContent = percent + '%';
+        }
+
+        function completeOnboarding() {
+            alert(`✅ Success! ${uploadedCount} images uploaded to ${folder}\n\nYou can now close this tab.`);
+            window.close();
+        }
+    </script>
+</body>
+</html>
