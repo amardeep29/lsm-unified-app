@@ -322,7 +322,7 @@ MAIN_DASHBOARD_HTML = """
                 <p class="service-description">
                     Generate and edit images using AI. Create stunning visuals with text prompts or modify existing images.
                 </p>
-                <a href="http://localhost:{{ studio_port }}" class="service-button" target="_blank">
+                <a href="{{ studio_url }}" class="service-button" target="_blank">
                     Open Studio
                 </a>
             </div>
@@ -333,7 +333,7 @@ MAIN_DASHBOARD_HTML = """
                 <p class="service-description">
                     Onboard new clients with folder creation, image uploads, and labeling. Complete 5-step workflow.
                 </p>
-                <a href="http://localhost:{{ onboarding_port }}" class="service-button" target="_blank">
+                <a href="{{ onboarding_url }}" class="service-button" target="_blank">
                     Start Onboarding
                 </a>
             </div>
@@ -388,13 +388,39 @@ MAIN_DASHBOARD_HTML = """
 @app.route('/')
 def index():
     """Main dashboard"""
-    studio_port = int(os.environ.get('STUDIO_PORT', 8502))
-    onboarding_port = int(os.environ.get('ONBOARDING_PORT', 8501))
+    # Detect if running on Render or locally
+    render_external_url = os.environ.get('RENDER_EXTERNAL_URL')
+
+    if render_external_url:
+        # On Render - Streamlit apps are not directly accessible
+        # Show message that these features are available via standalone pages
+        studio_url = "#"
+        onboarding_url = "#"
+        is_render = True
+    else:
+        # Local development - use localhost with separate ports
+        studio_port = int(os.environ.get('STUDIO_PORT', 8502))
+        onboarding_port = int(os.environ.get('ONBOARDING_PORT', 8501))
+        studio_url = f"http://localhost:{studio_port}"
+        onboarding_url = f"http://localhost:{onboarding_port}"
+        is_render = False
+
+    # Add a note for Render deployment
+    render_note = """
+        <div style="background: #272F35; padding: 1rem; border-radius: 0.5rem; margin: 2rem auto; max-width: 800px; border: 1px solid rgba(231, 254, 58, 0.2);">
+            <p style="color: #E7FE3A; text-align: center; margin: 0;">
+                ⚠️ Note: Image Studio and Client Onboarding require local deployment with Streamlit.
+                Use the Upload Images and Label Images pages for cloud functionality.
+            </p>
+        </div>
+    """ if is_render else ""
+
+    html_with_note = MAIN_DASHBOARD_HTML.replace('</header>', f'</header>{render_note}')
 
     return render_template_string(
-        MAIN_DASHBOARD_HTML,
-        studio_port=studio_port,
-        onboarding_port=onboarding_port
+        html_with_note,
+        studio_url=studio_url,
+        onboarding_url=onboarding_url
     )
 
 # ============================================================================
