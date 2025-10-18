@@ -1,18 +1,13 @@
 #!/usr/bin/env python3
 """
-Unified Application Server - All Services in One Place
-Combines Flask API + Streamlit Apps + HTML Pages
+Flask API Server - Main Dashboard and API Endpoints
+Streamlit apps are deployed as separate Render services
 """
 
 import os
 import sys
-import subprocess
 import time
-import signal
-import atexit
 from flask import Flask, request, jsonify, send_from_directory, render_template_string, redirect
-from threading import Thread
-import requests
 
 # Add src directory to path
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'src'))
@@ -29,67 +24,9 @@ except ImportError:
 
 app = Flask(__name__)
 
-# Global state for subprocess management
-streamlit_processes = {}
+# Global state
 nano_client = None
 cloudinary_client = None
-
-# ============================================================================
-# SUBPROCESS MANAGEMENT
-# ============================================================================
-
-def start_streamlit_app(name, script, port):
-    """Start a Streamlit app as a subprocess"""
-    try:
-        env = os.environ.copy()
-        env['API_SERVER_URL'] = f'http://localhost:{os.getenv("PORT", 5001)}'
-
-        process = subprocess.Popen(
-            [
-                sys.executable, '-m', 'streamlit', 'run',
-                script,
-                '--server.port', str(port),
-                '--server.headless', 'true',
-                '--server.address', 'localhost',
-                '--browser.serverAddress', 'localhost'
-            ],
-            env=env,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
-
-        streamlit_processes[name] = process
-        print(f"✅ Started {name} on port {port}")
-        return True
-    except Exception as e:
-        print(f"❌ Failed to start {name}: {e}")
-        return False
-
-def stop_all_streamlit_apps():
-    """Stop all Streamlit subprocesses"""
-    for name, process in streamlit_processes.items():
-        try:
-            process.terminate()
-            process.wait(timeout=5)
-            print(f"✅ Stopped {name}")
-        except Exception as e:
-            print(f"⚠️ Error stopping {name}: {e}")
-            try:
-                process.kill()
-            except:
-                pass
-
-# Register cleanup on exit
-atexit.register(stop_all_streamlit_apps)
-
-def signal_handler(sig, frame):
-    """Handle shutdown signals"""
-    print("\n🛑 Shutting down all services...")
-    stop_all_streamlit_apps()
-    sys.exit(0)
-
-signal.signal(signal.SIGINT, signal_handler)
-signal.signal(signal.SIGTERM, signal_handler)
 
 # ============================================================================
 # CLIENT INITIALIZATION
@@ -388,37 +325,14 @@ MAIN_DASHBOARD_HTML = """
 @app.route('/')
 def index():
     """Main dashboard"""
-    # Detect if running on Render or locally
-    render_external_url = os.environ.get('RENDER_EXTERNAL_URL')
-
-    if render_external_url:
-        # On Render - Streamlit apps are not directly accessible
-        # Show message that these features are available via standalone pages
-        studio_url = "#"
-        onboarding_url = "#"
-        is_render = True
-    else:
-        # Local development - use localhost with separate ports
-        studio_port = int(os.environ.get('STUDIO_PORT', 8502))
-        onboarding_port = int(os.environ.get('ONBOARDING_PORT', 8501))
-        studio_url = f"http://localhost:{studio_port}"
-        onboarding_url = f"http://localhost:{onboarding_port}"
-        is_render = False
-
-    # Add a note for Render deployment
-    render_note = """
-        <div style="background: #272F35; padding: 1rem; border-radius: 0.5rem; margin: 2rem auto; max-width: 800px; border: 1px solid rgba(231, 254, 58, 0.2);">
-            <p style="color: #E7FE3A; text-align: center; margin: 0;">
-                ⚠️ Note: Image Studio and Client Onboarding require local deployment with Streamlit.
-                Use the Upload Images and Label Images pages for cloud functionality.
-            </p>
-        </div>
-    """ if is_render else ""
-
-    html_with_note = MAIN_DASHBOARD_HTML.replace('</header>', f'</header>{render_note}')
+    # Get Streamlit service URLs from environment variables
+    # On Render: These will be the public Render URLs of the separate Streamlit services
+    # Locally: These will be localhost URLs
+    studio_url = os.environ.get('IMAGE_STUDIO_URL', 'http://localhost:8502')
+    onboarding_url = os.environ.get('CLIENT_ONBOARDING_URL', 'http://localhost:8501')
 
     return render_template_string(
-        html_with_note,
+        MAIN_DASHBOARD_HTML,
         studio_url=studio_url,
         onboarding_url=onboarding_url
     )
@@ -741,27 +655,20 @@ if __name__ == '__main__':
         print(f"❌ Failed to initialize: {e}")
         sys.exit(1)
 
-    # Get ports from environment
+    # Get port from environment
     port = int(os.environ.get('PORT', 5001))
-    studio_port = int(os.environ.get('STUDIO_PORT', 8502))
-    onboarding_port = int(os.environ.get('ONBOARDING_PORT', 8501))
-
-    # Start Streamlit apps in background
-    print("\n🚀 Starting Streamlit Services...")
-    start_streamlit_app('Image Studio', 'app.py', studio_port)
-    start_streamlit_app('Client Onboarding', 'client_onboarding.py', onboarding_port)
-
-    # Wait for Streamlit apps to start
-    time.sleep(3)
 
     print(f"\n{'='*60}")
-    print(f"🎉 UNIFIED APPLICATION RUNNING")
+    print(f"🎉 LSM UNIFIED APP - FLASK API SERVER")
     print(f"{'='*60}")
     print(f"\n📊 Main Dashboard: http://localhost:{port}/")
-    print(f"🎨 Image Studio: http://localhost:{studio_port}/")
-    print(f"📋 Client Onboarding: http://localhost:{onboarding_port}/")
     print(f"📚 API Docs: http://localhost:{port}/api/docs")
     print(f"🏥 Health Check: http://localhost:{port}/health")
+    print(f"📤 Upload Images: http://localhost:{port}/upload")
+    print(f"📝 Label Images: http://localhost:{port}/label-images")
+    print(f"\n💡 Streamlit apps deployed separately:")
+    print(f"   IMAGE_STUDIO_URL={os.environ.get('IMAGE_STUDIO_URL', 'Not set')}")
+    print(f"   CLIENT_ONBOARDING_URL={os.environ.get('CLIENT_ONBOARDING_URL', 'Not set')}")
     print(f"\n{'='*60}\n")
 
     # Run Flask app
