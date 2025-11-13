@@ -14,6 +14,7 @@ from typing import Optional
 
 # Get API server URL from environment variable or use localhost as fallback
 API_SERVER_URL = os.getenv('API_SERVER_URL', 'http://localhost:5001')
+IMAGE_STUDIO_URL = os.getenv('IMAGE_STUDIO_URL', 'http://localhost:8502')
 
 # Page configuration
 st.set_page_config(
@@ -723,10 +724,10 @@ def step_4_completion():
         """, unsafe_allow_html=True)
 
     with col3:
-        # Link to main Streamlit app (you'll need to create this)
-        st.markdown("""
+        # Link to Image Studio
+        st.markdown(f"""
         <div style="text-align: center;">
-            <a href="http://localhost:8502" target="_blank" style="text-decoration: none;">
+            <a href="{IMAGE_STUDIO_URL}" target="_blank" style="text-decoration: none;">
                 <button style="
                     background-color: #6c757d;
                     color: white;
