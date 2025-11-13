@@ -424,35 +424,79 @@
                              loading="lazy">
                     </div>
                     <div class="url-display" title="${url}">${url}</div>
-                    <button class="copy-button" onclick="copyToClipboard('${escapeHtml(url)}', this)">
+                    <button class="copy-button" data-url="${escapeHtml(url)}">
                         Copy Link
                     </button>
                 `;
 
                 imageGrid.appendChild(card);
             });
+
+            // Add click event listeners to all copy buttons
+            document.querySelectorAll('.copy-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    const url = this.getAttribute('data-url');
+                    copyToClipboard(url, this);
+                });
+            });
         }
 
-        // Copy URL to clipboard
-        async function copyToClipboard(url, button) {
-            try {
-                await navigator.clipboard.writeText(url);
-
-                // Visual feedback
-                const originalText = button.textContent;
-                button.textContent = 'Copied!';
-                button.classList.add('copied');
-
-                // Reset after 2 seconds
-                setTimeout(() => {
-                    button.textContent = originalText;
-                    button.classList.remove('copied');
-                }, 2000);
-
-            } catch (error) {
-                console.error('Failed to copy:', error);
-                alert('Failed to copy link. Please try again.');
+        // Copy URL to clipboard with fallback for HTTP
+        function copyToClipboard(url, button) {
+            // Method 1: Try modern clipboard API (works on HTTPS and localhost)
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(url).then(() => {
+                    showCopySuccess(button);
+                }).catch(err => {
+                    console.error('Clipboard API failed:', err);
+                    fallbackCopyToClipboard(url, button);
+                });
+            } else {
+                // Method 2: Fallback for HTTP contexts
+                fallbackCopyToClipboard(url, button);
             }
+        }
+
+        // Fallback copy method that works in HTTP contexts
+        function fallbackCopyToClipboard(url, button) {
+            try {
+                // Create a temporary textarea
+                const textArea = document.createElement('textarea');
+                textArea.value = url;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-999999px';
+                textArea.style.top = '-999999px';
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+
+                // Try to copy
+                const successful = document.execCommand('copy');
+                textArea.remove();
+
+                if (successful) {
+                    showCopySuccess(button);
+                } else {
+                    throw new Error('Copy command failed');
+                }
+            } catch (error) {
+                console.error('Fallback copy failed:', error);
+                // Last resort: show a prompt with the URL
+                prompt('Copy this URL:', url);
+            }
+        }
+
+        // Show copy success feedback
+        function showCopySuccess(button) {
+            const originalText = button.textContent;
+            button.textContent = 'Copied!';
+            button.classList.add('copied');
+
+            // Reset after 2 seconds
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.classList.remove('copied');
+            }, 2000);
         }
 
         // Escape HTML for safe insertion
