@@ -42,7 +42,26 @@ def start_streamlit_app(name, script, port):
     """Start a Streamlit app as a subprocess"""
     try:
         env = os.environ.copy()
-        env['API_SERVER_URL'] = f'http://localhost:{os.getenv("PORT", 5001)}'
+
+        # Set API_SERVER_URL based on deployment environment
+        public_url = os.getenv('PUBLIC_URL', '')
+        if public_url:
+            # Production: use public URL
+            env['API_SERVER_URL'] = public_url
+        else:
+            # Local development: use localhost
+            env['API_SERVER_URL'] = f'http://localhost:{os.getenv("PORT", 5001)}'
+
+        # Set IMAGE_STUDIO_URL for cross-linking between apps
+        studio_port = int(os.getenv('STUDIO_PORT', 8502))
+        use_nginx = os.getenv('USE_NGINX', 'false').lower() == 'true'
+
+        if public_url and use_nginx:
+            env['IMAGE_STUDIO_URL'] = f"{public_url}/studio"
+        elif public_url:
+            env['IMAGE_STUDIO_URL'] = f"{public_url}:{studio_port}"
+        else:
+            env['IMAGE_STUDIO_URL'] = f'http://localhost:{studio_port}'
 
         process = subprocess.Popen(
             [
