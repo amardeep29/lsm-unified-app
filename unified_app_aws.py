@@ -449,6 +449,7 @@ def api_docs():
             '/health': 'Health check endpoint',
             '/api/generate': 'Generate images from text prompts',
             '/api/edit': 'Edit images with text instructions',
+            '/webhook/edit-image': 'Webhook endpoint for editing images (Airtable integration)',
             '/api/check-client': 'Check if client folder exists',
             '/api/create-client-folders': 'Create client folder structure',
             '/api/get-client-images': 'Get list of images for a client',
@@ -561,6 +562,73 @@ def edit_image():
 
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/webhook/edit-image', methods=['POST'])
+def webhook_edit_image():
+    """Webhook endpoint for editing images - receives requests from Airtable"""
+    try:
+        data = request.get_json()
+
+        # Validate required fields
+        required_fields = ['record_id', 'image_url', 'prompt', 'client_folder']
+        missing_fields = [field for field in required_fields if field not in data]
+
+        if missing_fields:
+            return jsonify({
+                'success': False,
+                'error': f"Missing required fields: {', '.join(missing_fields)}"
+            }), 400
+
+        record_id = data['record_id']
+        image_url = data['image_url']
+        prompt = data['prompt']
+        client_folder = data['client_folder']
+
+        # Edit the image using Nano Banana
+        edited_image = nano_client.edit_image(
+            image_path="",
+            prompt=prompt,
+            save_to_disk=False,
+            image_url=image_url
+        )
+
+        if not edited_image:
+            return jsonify({
+                'success': False,
+                'error': 'Failed to edit image'
+            }), 500
+
+        # Upload edited image to Cloudinary
+        if cloudinary_client:
+            upload_result = cloudinary_client.upload_image(
+                image_data=edited_image,
+                folder_type="edited",
+                filename=f"edited_{int(time.time())}",
+                client_folder=client_folder
+            )
+
+            if upload_result['success']:
+                return jsonify({
+                    'success': True,
+                    'record_id': record_id,
+                    'edited_image_url': upload_result['url']
+                }), 200
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': f"Failed to upload edited image: {upload_result.get('error')}"
+                }), 500
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Cloudinary not configured'
+            }), 500
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 @app.route('/api/check-client', methods=['POST'])
 def check_client():
