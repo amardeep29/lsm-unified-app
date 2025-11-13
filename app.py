@@ -222,24 +222,70 @@ def save_uploaded_file(uploaded_file):
 def generate_image_tab():
     """Tab for generating new images"""
     st.header("🎨 Generate New Image")
-    
+
+    st.write("")  # Spacing
+
+    # Client folder selector
+    st.markdown("### 🏢 Select Client Folder")
+
+    if not st.session_state.cloudinary_initialized:
+        st.error("❌ Cloudinary not initialized. Please check your environment variables.")
+        return
+
+    # Load client folders
+    folders_result = st.session_state.cloudinary_client.list_client_folders()
+
+    if not folders_result['success']:
+        st.error(f"❌ Failed to load client folders: {folders_result.get('error')}")
+        return
+
+    client_folders = folders_result.get('folders', [])
+
+    if not client_folders:
+        st.warning("⚠️ No client folders found. Please create a client folder first via the onboarding process.")
+        return
+
+    selected_client_folder = st.selectbox(
+        "Select a client folder to save the generated image:",
+        options=[""] + client_folders,
+        format_func=lambda x: "-- Select a client folder --" if x == "" else x,
+        key="generate_client_selector"
+    )
+
+    st.write("")  # Spacing
+    st.markdown("---")
+    st.write("")  # Spacing
+
     # Prompt input
+    st.markdown("### 📝 Image Description")
     prompt = st.text_area(
         "Describe the image you want to generate:",
         height=100,
-        placeholder="Example: A majestic lion sitting on a rock in the African savanna at sunset, photorealistic, high detail..."
+        placeholder="Example: A majestic lion sitting on a rock in the African savanna at sunset, photorealistic, high detail...",
+        key="generate_prompt_input"
     )
-    
+
+    st.write("")  # Spacing
+
     # Generate button
     col1, col2 = st.columns([1, 4])
     with col1:
         generate_btn = st.button("🚀 Generate Image", type="primary")
-    
-    if generate_btn and prompt:
+
+    if generate_btn:
+        # Validation
+        if not selected_client_folder:
+            st.error("❌ Please select a client folder before generating.")
+            return
+
+        if not prompt:
+            st.error("❌ Please enter a description for your image.")
+            return
+
         if not st.session_state.client_initialized or not st.session_state.cloudinary_initialized:
             st.error("❌ Clients not properly initialized. Please check your environment variables.")
             return
-        
+
         with st.spinner("🎨 Generating your image..."):
             try:
                 # Generate image using Nano Banana
@@ -247,13 +293,14 @@ def generate_image_tab():
                     prompt=prompt,
                     save_to_disk=False
                 )
-                
+
                 if generated_image:
-                    # Upload to Cloudinary
+                    # Upload to Cloudinary with selected client folder
                     upload_result = st.session_state.cloudinary_client.upload_image(
                         image_data=generated_image,
                         folder_type="generated",
-                        filename="generated_image"
+                        filename="generated_image",
+                        client_folder=selected_client_folder
                     )
                     
                     if upload_result['success']:
@@ -300,180 +347,275 @@ def generate_image_tab():
                         st.error(f"❌ Failed to upload to Cloudinary: {upload_result.get('error')}")
                 else:
                     st.error("❌ Failed to generate image. Please try again.")
-                    
+
             except Exception as e:
                 st.error(f"❌ Error generating image: {str(e)}")
-    
-    elif generate_btn and not prompt:
-        st.warning("⚠️ Please enter a description for your image.")
 
 def edit_image_tab():
-    """Tab for editing existing images"""
+    """Tab for editing existing images with image gallery selection"""
     st.header("✏️ Edit Existing Image")
-    
-    # Input method selection
-    input_method = st.radio(
-        "Choose input method:",
-        ["Upload Image File", "Use Cloudinary URL"],
-        horizontal=True
+
+    st.write("")  # Spacing
+
+    # Client folder selector
+    st.markdown("### 🏢 Select Client Folder")
+
+    if not st.session_state.cloudinary_initialized:
+        st.error("❌ Cloudinary not initialized. Please check your environment variables.")
+        return
+
+    # Load client folders
+    folders_result = st.session_state.cloudinary_client.list_client_folders()
+
+    if not folders_result['success']:
+        st.error(f"❌ Failed to load client folders: {folders_result.get('error')}")
+        return
+
+    client_folders = folders_result.get('folders', [])
+
+    if not client_folders:
+        st.warning("⚠️ No client folders found. Please create a client folder first via the onboarding process.")
+        return
+
+    selected_client_folder = st.selectbox(
+        "Select a client folder:",
+        options=[""] + client_folders,
+        format_func=lambda x: "-- Select a client folder --" if x == "" else x,
+        key="edit_client_selector"
     )
-    
+
+    if not selected_client_folder:
+        st.info("ℹ️ Please select a client folder to continue.")
+        return
+
+    st.write("")  # Spacing
+    st.markdown("---")
+    st.write("")  # Spacing
+
+    # Input method selection
+    st.markdown("### 📸 Choose Input Method")
+    input_method = st.radio(
+        "How would you like to select an image?",
+        ["Upload New Image", "Select Existing Image"],
+        horizontal=True,
+        key="edit_input_method"
+    )
+
     input_image = None
-    input_source = None
-    
-    if input_method == "Upload Image File":
+    input_image_url = None
+    selected_image_public_id = None
+
+    # Initialize session state for selected image
+    if 'selected_image_for_edit' not in st.session_state:
+        st.session_state.selected_image_for_edit = None
+
+    st.write("")  # Spacing
+
+    if input_method == "Upload New Image":
+        # Reset selected image when switching methods
+        st.session_state.selected_image_for_edit = None
+
         uploaded_file = st.file_uploader(
             "Choose an image file",
             type=['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp'],
-            help="Upload an image file to edit"
+            help="Upload an image file to edit",
+            key="edit_file_uploader"
         )
-        
+
         if uploaded_file:
             input_image = Image.open(uploaded_file)
-            input_source = "upload"
-            # Display uploaded image only once, in a smaller preview
-            with st.expander("📁 Preview Uploaded Image", expanded=False):
-                st.image(input_image, caption="Uploaded Image", use_container_width=True)
-    
-    else:  # Cloudinary URL
-        cloudinary_url = st.text_input(
-            "Enter Cloudinary URL:",
-            placeholder="https://res.cloudinary.com/your-cloud/image/upload/..."
-        )
-        
-        if cloudinary_url:
-            if st.session_state.cloudinary_client.validate_cloudinary_url(cloudinary_url):
-                with st.spinner("📥 Loading image from URL..."):
-                    input_image = st.session_state.cloudinary_client.download_image_from_url(cloudinary_url)
-                    if input_image:
-                        input_source = "cloudinary"
-                        st.image(input_image, caption="Image from Cloudinary", use_container_width=True)
-                    else:
-                        st.error("❌ Failed to load image from URL. Please check the URL and try again.")
-            else:
-                st.error("❌ Invalid Cloudinary URL. Please enter a valid Cloudinary image URL.")
-    
-    # Only show edit options if we have an image
-    if input_image:
+            st.write("")  # Spacing
+            st.markdown("**Preview:**")
+            st.image(input_image, caption="Uploaded Image", use_container_width=True)
+
+    else:  # Select Existing Image
+        st.markdown("**Select an image from your input folder:**")
+        st.write("")  # Spacing
+
+        # Load images from input folder
+        with st.spinner("📥 Loading images..."):
+            images_result = st.session_state.cloudinary_client.list_images(
+                folder_type="input",
+                max_results=100,
+                client_folder=selected_client_folder
+            )
+
+        if not images_result['success']:
+            st.error(f"❌ Failed to load images: {images_result.get('error')}")
+            return
+
+        images = images_result.get('images', [])
+
+        if not images:
+            st.warning(f"⚠️ No images found in `{selected_client_folder}/input/` folder. Please upload images first.")
+            return
+
+        # Check if we already have a selected image
+        if st.session_state.selected_image_for_edit:
+            # Show selected image preview
+            selected_img = st.session_state.selected_image_for_edit
+            st.success(f"✓ Selected: {selected_img['filename']}")
+
+            # Show large preview
+            st.image(selected_img['url'], caption=selected_img['filename'], use_container_width=True)
+
+            # Change image button
+            if st.button("🔄 Change Image", key="change_image_btn"):
+                st.session_state.selected_image_for_edit = None
+                st.rerun()
+
+            # Set the input image for processing
+            input_image_url = selected_img['url']
+            selected_image_public_id = selected_img['public_id']
+
+        else:
+            # Show image gallery for selection
+            st.info(f"📊 Found {len(images)} image(s). Click an image to select it.")
+            st.write("")  # Spacing
+
+            # Display images in 3-column grid
+            cols_per_row = 3
+            for i in range(0, len(images), cols_per_row):
+                cols = st.columns(cols_per_row)
+
+                for j, col in enumerate(cols):
+                    if i + j < len(images):
+                        img = images[i + j]
+                        with col:
+                            # Display thumbnail
+                            img_url = img.get('secure_url', '')
+                            filename = img.get('public_id', '').split('/')[-1]
+
+                            st.image(img_url, use_container_width=True)
+                            st.caption(f"**{filename}**")
+
+                            # Select button
+                            if st.button(f"✓ Select", key=f"select_img_{i+j}"):
+                                st.session_state.selected_image_for_edit = {
+                                    'url': img_url,
+                                    'filename': filename,
+                                    'public_id': img.get('public_id')
+                                }
+                                st.rerun()
+
+    # Only show edit section if we have an image selected
+    if input_image or input_image_url:
+        st.write("")  # Spacing
         st.markdown("---")
-        st.subheader("✨ Edit Instructions")
-        
-        # Edit prompt
+        st.write("")  # Spacing
+
+        st.markdown("### ✨ Edit Instructions")
+
         edit_prompt = st.text_area(
             "Describe how you want to edit the image:",
             height=100,
             placeholder="Example: Add sunglasses and a hat, make the background more colorful, change to cartoon style...",
-            key="edit_prompt_input"
+            key="edit_prompt_textarea"
         )
-        
-        # Edit button
-        if edit_prompt:
-            col1, col2 = st.columns([1, 4])
-            with col1:
-                edit_btn = st.button("✨ Edit Image", type="primary")
-            
-            if edit_btn:
-                if not st.session_state.client_initialized or not st.session_state.cloudinary_initialized:
-                    st.error("❌ Clients not properly initialized. Please check your environment variables.")
-                    return
-            
+
+        st.write("")  # Spacing
+
+        col1, col2 = st.columns([1, 4])
+        with col1:
+            edit_btn = st.button("✨ Edit Image", type="primary", key="edit_image_btn")
+
+        if edit_btn:
+            # Validation
+            if not edit_prompt:
+                st.error("❌ Please enter edit instructions.")
+                return
+
+            if not st.session_state.client_initialized or not st.session_state.cloudinary_initialized:
+                st.error("❌ Clients not properly initialized. Please check your environment variables.")
+                return
+
             with st.spinner("✨ Editing your image..."):
                 try:
-                    # If uploaded file, we need to upload it to Cloudinary first
-                    if input_source == "upload":
+                    # If uploaded file, upload to Cloudinary first
+                    if input_image:
                         upload_result = st.session_state.cloudinary_client.upload_image(
                             image_data=input_image,
                             folder_type="input",
-                            filename="input_image"
+                            filename="temp_input",
+                            client_folder=selected_client_folder
                         )
-                        
+
                         if not upload_result['success']:
                             st.error(f"❌ Failed to upload input image: {upload_result.get('error')}")
                             return
-                    
-                    # Save input image temporarily for processing
-                    with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp_file:
-                        input_image.save(tmp_file.name)
-                        tmp_path = tmp_file.name
-                    
-                    try:
-                        # Edit image using Nano Banana
-                        edited_image = st.session_state.nano_client.edit_image(
-                            image_path=tmp_path,
-                            prompt=edit_prompt,
-                            save_to_disk=False
+
+                        input_image_url = upload_result['url']
+
+                    # Edit image using Nano Banana (using URL)
+                    edited_image = st.session_state.nano_client.edit_image(
+                        image_path="",
+                        prompt=edit_prompt,
+                        save_to_disk=False,
+                        image_url=input_image_url
+                    )
+
+                    if edited_image:
+                        # Upload edited image to Cloudinary
+                        upload_result = st.session_state.cloudinary_client.upload_image(
+                            image_data=edited_image,
+                            folder_type="edited",
+                            filename=f"edited_{int(time.time())}",
+                            client_folder=selected_client_folder
                         )
-                        
-                        if edited_image:
-                            # Upload edited image to Cloudinary
-                            upload_result = st.session_state.cloudinary_client.upload_image(
-                                image_data=edited_image,
-                                folder_type="edited",
-                                filename="edited_image"
+
+                        if upload_result['success']:
+                            # Add to session state
+                            result_data = {
+                                'type': 'edited',
+                                'prompt': edit_prompt,
+                                'edited_image': edited_image,
+                                'cloudinary_url': upload_result['url'],
+                                'cloudinary_public_id': upload_result['public_id'],
+                                'timestamp': time.time(),
+                                'client_folder': selected_client_folder
+                            }
+                            st.session_state.generated_images.append(result_data)
+                            add_to_session_cost()
+
+                            # Display success
+                            st.markdown("""
+                            <div class="success-box">
+                                ✅ <strong>Image Edited Successfully!</strong>
+                            </div>
+                            """, unsafe_allow_html=True)
+
+                            # Display before/after comparison
+                            st.subheader("🔄 Before & After Comparison")
+                            col1, col2 = st.columns(2)
+                            with col1:
+                                st.image(input_image_url, caption="📄 Original Image", use_container_width=True)
+                            with col2:
+                                st.image(edited_image, caption="✨ Edited Image", use_container_width=True)
+
+                            # Cloudinary URL and download
+                            st.write("**Edited Image Cloudinary URL:**")
+                            st.code(upload_result['url'], language=None)
+
+                            # Download button
+                            img_bytes = io.BytesIO()
+                            edited_image.save(img_bytes, format='PNG')
+                            img_bytes.seek(0)
+
+                            st.download_button(
+                                label="📥 Download Edited Image",
+                                data=img_bytes,
+                                file_name=f"edited_{int(time.time())}.png",
+                                mime="image/png"
                             )
-                            
-                            if upload_result['success']:
-                                # Add to session state
-                                result_data = {
-                                    'type': 'edited',
-                                    'prompt': edit_prompt,
-                                    'original_image': input_image,
-                                    'edited_image': edited_image,
-                                    'cloudinary_url': upload_result['url'],
-                                    'cloudinary_public_id': upload_result['public_id'],
-                                    'timestamp': time.time()
-                                }
-                                st.session_state.generated_images.append(result_data)
-                                add_to_session_cost()
-                                
-                                # Display success
-                                st.markdown("""
-                                <div class="success-box">
-                                    ✅ <strong>Image Edited Successfully!</strong>
-                                </div>
-                                """, unsafe_allow_html=True)
-                                
-                                # Display before/after comparison
-                                st.subheader("🔄 Before & After Comparison")
-                                col1, col2 = st.columns(2)
-                                with col1:
-                                    st.image(input_image, caption="📄 Original Image", use_container_width=True)
-                                with col2:
-                                    st.image(edited_image, caption="✨ Edited Image", use_container_width=True)
-                                
-                                # Cloudinary URL and download
-                                st.write("**Edited Image Cloudinary URL:**")
-                                st.code(upload_result['url'], language=None)
-                                
-                                # Download button
-                                img_bytes = io.BytesIO()
-                                edited_image.save(img_bytes, format='PNG')
-                                img_bytes.seek(0)
-                                
-                                st.download_button(
-                                    label="📥 Download Edited Image",
-                                    data=img_bytes,
-                                    file_name=f"edited_{int(time.time())}.png",
-                                    mime="image/png"
-                                )
-                            else:
-                                st.error(f"❌ Failed to upload edited image: {upload_result.get('error')}")
                         else:
-                            st.error("❌ Failed to edit image. Please try again.")
-                    
-                    finally:
-                        # Clean up temp file
-                        try:
-                            os.unlink(tmp_path)
-                        except:
-                            pass
-                            
+                            st.error(f"❌ Failed to upload edited image: {upload_result.get('error')}")
+                    else:
+                        st.error("❌ Failed to edit image. Please try again.")
+
                 except Exception as e:
                     st.error(f"❌ Error editing image: {str(e)}")
-        else:
-            st.info("ℹ️ Enter edit instructions above to proceed.")
     else:
-        st.info("📁 Please upload an image or enter a Cloudinary URL to start editing.")
+        st.info("📁 Please select or upload an image to start editing.")
 
 def image_gallery_tab():
     """Tab for browsing all images in Cloudinary"""

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Label Images - Client Onboarding</title>
+    <title>Browse Images - Copy Links</title>
     <style>
         * {
             box-sizing: border-box;
@@ -21,7 +21,7 @@
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             background: #06070B;
             border-radius: 0;
@@ -90,24 +90,13 @@
             padding: 20px;
             border-radius: 8px;
             margin-bottom: 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
+            text-align: center;
             border: 1px solid rgba(231, 254, 58, 0.15);
         }
 
         .status-counter {
             font-size: 1.2rem;
             font-weight: bold;
-        }
-
-        .status-counter.incomplete {
-            color: #dc3545;
-        }
-
-        .status-counter.complete {
             color: #E7FE3A;
         }
 
@@ -153,156 +142,87 @@
             margin-bottom: 15px;
         }
 
-        .image-list {
-            display: flex;
-            flex-direction: column;
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 30px;
+            margin-bottom: 40px;
         }
 
-        .image-container {
+        .image-card {
             background: #272F35;
             border: 2px solid rgba(231, 254, 58, 0.15);
             border-radius: 12px;
-            padding: 25px;
+            padding: 20px;
             transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
         }
 
-        .image-container.labeled {
+        .image-card:hover {
+            box-shadow: 0 10px 30px rgba(231, 254, 58, 0.2);
             border-color: #E7FE3A;
         }
 
-        .image-container.unlabeled {
-            border-color: #dc3545;
-        }
-
-        .image-container:hover {
-            box-shadow: 0 10px 30px rgba(231, 254, 58, 0.1);
-        }
-
-        .image-row {
-            display: flex;
-            gap: 25px;
-            align-items: flex-start;
-        }
-
-        .image-thumbnail {
-            flex-shrink: 0;
-        }
-
-        .thumbnail {
-            width: 250px;
+        .thumbnail-container {
+            width: 100%;
             height: 250px;
-            object-fit: cover;
+            margin-bottom: 15px;
+            overflow: hidden;
             border-radius: 8px;
             border: 1px solid rgba(231, 254, 58, 0.2);
         }
 
-        .image-details {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
+        .thumbnail {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         .url-display {
             font-family: 'Courier New', monospace;
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             color: #B0B0B0;
             word-break: break-all;
             background: #06070B;
-            padding: 12px;
+            padding: 10px;
             border-radius: 6px;
             border: 1px solid rgba(231, 254, 58, 0.15);
+            margin-bottom: 15px;
+            flex-grow: 1;
+            max-height: 80px;
+            overflow-y: auto;
         }
 
-        .label-input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .label-input-group label {
-            font-weight: 600;
-            color: #E6E6E6;
-        }
-
-        .label-input {
+        .copy-button {
             width: 100%;
-            padding: 14px;
-            font-size: 1rem;
-            border: 2px solid rgba(231, 254, 58, 0.2);
-            border-radius: 8px;
-            transition: all 0.3s;
-            background: #06070B;
-            color: #E6E6E6;
-        }
-
-        .label-input::placeholder {
-            color: #666;
-        }
-
-        .label-input:focus {
-            outline: none;
-            border-color: #E7FE3A;
-            background: #272F35;
-        }
-
-        .label-input.error {
-            border-color: #dc3545;
-        }
-
-        .label-input.valid {
-            border-color: #E7FE3A;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            margin-top: 40px;
-            padding-top: 40px;
-            border-top: 1px solid rgba(231, 254, 58, 0.1);
-        }
-
-        button {
-            padding: 14px 35px;
+            padding: 12px;
             font-size: 1rem;
             font-weight: bold;
             border: none;
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s;
-        }
-
-        .btn-primary {
             background-color: #E7FE3A;
             color: #06070B;
         }
 
-        .btn-primary::after {
-            content: " →";
+        .copy-button::before {
+            content: "📋 ";
         }
 
-        .btn-primary:hover {
+        .copy-button:hover {
             background-color: #d4eb25;
             transform: translateY(-2px);
         }
 
-        .btn-primary:disabled {
-            background-color: #272F35;
-            color: #666;
-            cursor: not-allowed;
+        .copy-button.copied {
+            background-color: #28a745;
+            color: white;
         }
 
-        .btn-secondary {
-            background-color: #272F35;
-            color: #E6E6E6;
-            border: 1px solid rgba(231, 254, 58, 0.3);
-        }
-
-        .btn-secondary:hover {
-            background-color: #06070B;
-            border-color: #E7FE3A;
+        .copy-button.copied::before {
+            content: "✓ ";
         }
 
         /* Mobile responsive */
@@ -315,40 +235,32 @@
                 font-size: 1.8rem;
             }
 
-            .image-row {
-                flex-direction: column;
-            }
-
-            .thumbnail {
-                width: 100%;
-                max-width: 250px;
-                height: auto;
-                margin: 0 auto;
-            }
-
-            .status-bar {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .action-buttons {
-                flex-direction: column;
+            .image-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
             }
         }
 
-        /* Touch-friendly on mobile */
-        @media (max-width: 768px) {
-            button, .label-input {
-                min-height: 44px;
-            }
+        /* Scrollbar styling */
+        .url-display::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .url-display::-webkit-scrollbar-track {
+            background: #06070B;
+        }
+
+        .url-display::-webkit-scrollbar-thumb {
+            background: #E7FE3A;
+            border-radius: 3px;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>📝 Label Images</h1>
-            <div class="client-name" id="clientNameDisplay">Select a client folder</div>
+            <h1>🖼️ Browse Images</h1>
+            <div class="client-name" id="clientNameDisplay">Select a client folder to view images</div>
         </header>
 
         <div class="folder-selector">
@@ -358,33 +270,24 @@
             </select>
         </div>
 
-        <div class="status-bar">
-            <div class="status-counter" id="statusCounter">Labeled: 0 of 0 images</div>
-            <div id="validationMessage"></div>
+        <div class="status-bar" id="statusBar" style="display: none;">
+            <div class="status-counter" id="statusCounter">0 images available</div>
         </div>
 
-        <div id="loadingSpinner" class="loading">
+        <div id="loadingSpinner" class="loading" style="display: none;">
             <div class="spinner"></div>
             <p>Loading images...</p>
         </div>
 
         <div id="errorContainer"></div>
 
-        <div id="imageList" class="image-list"></div>
-
-        <div class="action-buttons" id="actionButtons" style="display: none;">
-            <button class="btn-secondary" onclick="window.history.back()">← Back</button>
-            <button class="btn-primary" id="downloadBtn" onclick="downloadLabels()" disabled>
-                Download Labels File
-            </button>
-        </div>
+        <div id="imageGrid" class="image-grid"></div>
     </div>
 
     <script>
         // Global state
         let clientName = '';
         let images = [];
-        let labels = new Map();
         let allFolders = [];
 
         // Get API server URL from environment or use current domain
@@ -444,18 +347,14 @@
                 // Reset if no folder selected
                 clientName = '';
                 images = [];
-                labels = new Map();
-                document.getElementById('imageList').innerHTML = '';
-                document.getElementById('actionButtons').style.display = 'none';
-                document.getElementById('clientNameDisplay').textContent = 'Select a client folder';
-                document.getElementById('statusCounter').textContent = 'Labeled: 0 of 0 images';
-                document.getElementById('validationMessage').innerHTML = '';
+                document.getElementById('imageGrid').innerHTML = '';
+                document.getElementById('statusBar').style.display = 'none';
+                document.getElementById('clientNameDisplay').textContent = 'Select a client folder to view images';
                 return;
             }
 
             // Load images for selected folder
             clientName = selectedFolder;
-            labels = new Map(); // Reset labels
             loadImages(selectedFolder);
         }
 
@@ -463,8 +362,8 @@
         async function loadImages(client) {
             // Show loading spinner
             document.getElementById('loadingSpinner').style.display = 'block';
-            document.getElementById('imageList').innerHTML = '';
-            document.getElementById('actionButtons').style.display = 'none';
+            document.getElementById('imageGrid').innerHTML = '';
+            document.getElementById('statusBar').style.display = 'none';
 
             try {
                 const response = await fetch(`${API_SERVER_URL}/api/get-client-images?client=${encodeURIComponent(client)}`);
@@ -486,198 +385,81 @@
 
         // Render images to the page
         function renderImages() {
-            const imageList = document.getElementById('imageList');
-            const actionButtons = document.getElementById('actionButtons');
+            const imageGrid = document.getElementById('imageGrid');
+            const statusBar = document.getElementById('statusBar');
+            const statusCounter = document.getElementById('statusCounter');
             const clientNameDisplay = document.getElementById('clientNameDisplay');
 
             // Update client name display
             clientNameDisplay.textContent = `Client: ${clientName}`;
 
             if (images.length === 0) {
-                imageList.innerHTML = `
-                    <div class="empty-message">
+                imageGrid.innerHTML = `
+                    <div class="empty-message" style="grid-column: 1 / -1;">
                         <h2>No Images Found</h2>
                         <p>No images found in <code>${clientName}/input/</code> folder.</p>
-                        <p>Please go back and upload images first.</p>
+                        <p>Please upload images first.</p>
                     </div>
                 `;
                 return;
             }
+
+            // Show status bar
+            statusBar.style.display = 'block';
+            statusCounter.textContent = `${images.length} image${images.length !== 1 ? 's' : ''} available`;
 
             // Clear existing content
-            imageList.innerHTML = '';
+            imageGrid.innerHTML = '';
 
-            // Create image containers
+            // Create image cards
             images.forEach((url, index) => {
-                const container = document.createElement('div');
-                container.className = 'image-container unlabeled';
-                container.id = `image-${index}`;
+                const card = document.createElement('div');
+                card.className = 'image-card';
 
-                container.innerHTML = `
-                    <div class="image-row">
-                        <div class="image-thumbnail">
-                            <img src="${url.replace('/upload/', '/upload/w_250,h_250,c_fill/')}"
-                                 class="thumbnail"
-                                 alt="Image ${index + 1}"
-                                 loading="lazy">
-                        </div>
-                        <div class="image-details">
-                            <div class="url-display">${url}</div>
-                            <div class="label-input-group">
-                                <label for="label-${index}">Product Name:</label>
-                                <input type="text"
-                                       id="label-${index}"
-                                       class="label-input"
-                                       placeholder="Enter product name"
-                                       data-index="${index}"
-                                       data-url="${url}">
-                            </div>
-                        </div>
+                card.innerHTML = `
+                    <div class="thumbnail-container">
+                        <img src="${url.replace('/upload/', '/upload/w_300,h_250,c_fill/')}"
+                             class="thumbnail"
+                             alt="Image ${index + 1}"
+                             loading="lazy">
                     </div>
+                    <div class="url-display" title="${url}">${url}</div>
+                    <button class="copy-button" onclick="copyToClipboard('${escapeHtml(url)}', this)">
+                        Copy Link
+                    </button>
                 `;
 
-                imageList.appendChild(container);
-
-                // Add event listener
-                const input = container.querySelector('.label-input');
-                input.addEventListener('input', handleLabelInput);
-                input.addEventListener('blur', validateSingleLabel);
+                imageGrid.appendChild(card);
             });
-
-            // Show action buttons
-            actionButtons.style.display = 'flex';
-
-            // Update counter
-            updateCounter();
         }
 
-        // Handle label input
-        function handleLabelInput(event) {
-            const input = event.target;
-            const index = parseInt(input.dataset.index);
-            const url = input.dataset.url;
-            const value = input.value.trim();
+        // Copy URL to clipboard
+        async function copyToClipboard(url, button) {
+            try {
+                await navigator.clipboard.writeText(url);
 
-            // Store label
-            if (value) {
-                labels.set(url, sanitizeLabel(value));
-                input.classList.remove('error');
-                input.classList.add('valid');
-                document.getElementById(`image-${index}`).classList.remove('unlabeled');
-                document.getElementById(`image-${index}`).classList.add('labeled');
-            } else {
-                labels.delete(url);
-                input.classList.remove('valid');
-                document.getElementById(`image-${index}`).classList.remove('labeled');
-                document.getElementById(`image-${index}`).classList.add('unlabeled');
-            }
+                // Visual feedback
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                button.classList.add('copied');
 
-            // Update counter and validate
-            updateCounter();
-            validateLabels();
-        }
+                // Reset after 2 seconds
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.classList.remove('copied');
+                }, 2000);
 
-        // Validate single label on blur
-        function validateSingleLabel(event) {
-            const input = event.target;
-            const value = input.value.trim();
-
-            if (!value) {
-                input.classList.add('error');
-            } else {
-                input.classList.remove('error');
+            } catch (error) {
+                console.error('Failed to copy:', error);
+                alert('Failed to copy link. Please try again.');
             }
         }
 
-        // Sanitize label
-        function sanitizeLabel(label) {
-            // Remove pipes and newlines
-            label = label.replace(/[|\n\r]/g, '');
-            // Convert multiple spaces to single space
-            label = label.replace(/\s+/g, ' ');
-            // Convert to lowercase (optional)
-            label = label.toLowerCase();
-            return label.trim();
-        }
-
-        // Update counter
-        function updateCounter() {
-            const counter = document.getElementById('statusCounter');
-            const labeledCount = labels.size;
-            const totalCount = images.length;
-
-            counter.textContent = `Labeled: ${labeledCount} of ${totalCount} images`;
-
-            if (labeledCount === totalCount && totalCount > 0) {
-                counter.classList.remove('incomplete');
-                counter.classList.add('complete');
-            } else {
-                counter.classList.remove('complete');
-                counter.classList.add('incomplete');
-            }
-        }
-
-        // Validate all labels
-        function validateLabels() {
-            const downloadBtn = document.getElementById('downloadBtn');
-            const validationMessage = document.getElementById('validationMessage');
-            const allLabeled = labels.size === images.length && images.length > 0;
-
-            if (allLabeled) {
-                downloadBtn.disabled = false;
-                validationMessage.innerHTML = '<span style="color: #E7FE3A; font-weight: bold;">✓ All images labeled!</span>';
-            } else {
-                downloadBtn.disabled = true;
-                const remaining = images.length - labels.size;
-                validationMessage.innerHTML = `<span style="color: #dc3545; font-weight: bold;">${remaining} image(s) remaining</span>`;
-            }
-
-            return allLabeled;
-        }
-
-        // Collect all labels
-        function collectLabels() {
-            const labelArray = [];
-            images.forEach(url => {
-                const label = labels.get(url);
-                if (label) {
-                    labelArray.push({ label, url });
-                }
-            });
-            return labelArray;
-        }
-
-        // Download labels as text file
-        function downloadLabels() {
-            if (!validateLabels()) {
-                alert('Please label all images before downloading.');
-
-                // Highlight empty fields
-                document.querySelectorAll('.label-input').forEach(input => {
-                    if (!input.value.trim()) {
-                        input.classList.add('error');
-                        input.focus();
-                    }
-                });
-                return;
-            }
-
-            const labelData = collectLabels();
-            const content = labelData.map(item => `${item.label} | ${item.url}`).join('\n');
-
-            const blob = new Blob([content], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `${clientName}_image_labels.txt`;
-            link.click();
-
-            URL.revokeObjectURL(url);
-
-            // Show success message
-            const validationMessage = document.getElementById('validationMessage');
-            validationMessage.innerHTML = '<span style="color: #E7FE3A; font-weight: bold;">✓ Labels downloaded successfully!</span>';
+        // Escape HTML for safe insertion
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
 
         // Show error message
@@ -687,17 +469,14 @@
                 <div class="error-message">
                     <strong>Error:</strong> ${message}
                     <br><br>
-                    <button class="btn-secondary" onclick="location.reload()">Retry</button>
-                    <button class="btn-secondary" onclick="window.history.back()">Go Back</button>
+                    <button class="copy-button" onclick="location.reload()" style="width: auto; padding: 10px 20px; margin-right: 10px;">Retry</button>
+                    <button class="copy-button" onclick="window.history.back()" style="width: auto; padding: 10px 20px; background: #272F35; color: #E6E6E6;">Go Back</button>
                 </div>
             `;
         }
 
         // Initialize on page load
         window.addEventListener('DOMContentLoaded', () => {
-            // Hide loading spinner initially
-            document.getElementById('loadingSpinner').style.display = 'none';
-
             // Load folders from Cloudinary
             loadFolders();
         });

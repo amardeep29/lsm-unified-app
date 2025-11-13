@@ -284,8 +284,7 @@ def display_step_indicator(current_step: int):
         {"num": 1, "title": "Client Info"},
         {"num": 2, "title": "Folder Setup"},
         {"num": 3, "title": "Upload Images"},
-        {"num": 4, "title": "Label Images"},
-        {"num": 5, "title": "Complete"}
+        {"num": 4, "title": "Complete"}
     ]
 
     st.markdown('<div class="step-indicator">', unsafe_allow_html=True)
@@ -602,6 +601,8 @@ def step_3_image_upload():
     3. After uploading, return to this page
     4. Enter the number of images you uploaded below
     5. Click "Complete Onboarding" to finish
+
+    **Note:** You can view and copy image links anytime from the "Browse Images" page on the main dashboard.
     """)
 
     st.write("")  # Spacing
@@ -630,87 +631,13 @@ def step_3_image_upload():
             st.rerun()
 
     with col2:
-        if st.button("➡️ **Continue to Label Images →**", type="primary", use_container_width=True):
+        if st.button("✅ **Complete Onboarding →**", type="primary", use_container_width=True):
             st.session_state.onboarding_step = 4
             st.rerun()
 
-# Step 4: Image Labeling
-def step_4_label_images():
-    """Step 4: Label uploaded images"""
-    st.title("📝 Step 4: Label Images")
-
-    st.write("")  # Spacing
-
-    # Show client details
-    st.info(f"""
-    **Client Name:** `{st.session_state.client_name}`
-
-    **Instructions:**
-    1. Click the button below to open the image labeling page in a new tab
-    2. Label each image with its product name
-    3. Download the labels file when complete
-    4. Return to this page and click "Complete Onboarding"
-    """)
-
-    st.write("")  # Spacing
-
-    # Build the label images URL with client parameter
-    label_url = f"{API_SERVER_URL}/label-images?client={st.session_state.client_name}"
-
-    # Create a clickable link button
-    st.markdown(f"""
-    <div style="text-align: center; margin: 2rem 0;">
-        <a href="{label_url}" target="_blank" style="text-decoration: none;">
-            <button style="
-                background-color: #0078FF;
-                color: white;
-                padding: 1rem 3rem;
-                border: none;
-                border-radius: 0.5rem;
-                font-size: 1.125rem;
-                font-weight: bold;
-                cursor: pointer;
-                transition: background-color 0.2s;
-            ">
-                📝 Open Image Labeling Page (New Tab)
-            </button>
-        </a>
-    </div>
-    """, unsafe_allow_html=True)
-
-    st.write("")  # Spacing
-    st.write("---")
-    st.write("")  # Spacing
-
-    st.success("""
-    **✅ What happens in the labeling page:**
-
-    - View all uploaded images with thumbnails
-    - Enter a product name for each image
-    - Validation ensures all images are labeled
-    - Download a text file with format: `product_name | image_url`
-    """)
-
-    st.write("")  # Spacing
-    st.write("---")
-    st.write("")  # Spacing
-
-    # Navigation buttons
-    col1, col2 = st.columns(2)
-
-    with col1:
-        if st.button("⬅️ **Back to Upload**", use_container_width=True):
-            st.session_state.onboarding_step = 3
-            st.rerun()
-
-    with col2:
-        if st.button("✅ **Complete Onboarding →**", type="primary", use_container_width=True):
-            st.session_state.onboarding_step = 5
-            st.rerun()
-
-# Step 5: Completion
-def step_5_completion():
-    """Step 5: Display completion summary"""
+# Step 4: Completion
+def step_4_completion():
+    """Step 4: Display completion summary"""
     st.title("🎉 Onboarding Complete!")
 
     st.write("")  # Spacing
@@ -843,9 +770,7 @@ def main():
     elif st.session_state.onboarding_step == 3:
         step_3_image_upload()
     elif st.session_state.onboarding_step == 4:
-        step_4_label_images()
-    elif st.session_state.onboarding_step == 5:
-        step_5_completion()
+        step_4_completion()
 
     # Footer
     st.markdown("---")
